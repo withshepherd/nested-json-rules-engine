@@ -79,7 +79,7 @@
     "chai-as-promised": "^7.1.1",
     "colors": "~1.4.0",
     "dirty-chai": "2.0.1",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "mocha": "^8.4.0",
     "perfy": "^1.1.5",
     "sinon": "^11.1.1",
