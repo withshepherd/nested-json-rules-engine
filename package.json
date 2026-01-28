@@ -1,12 +1,9 @@
 {
-  "name": "@withshepherd/nested-json-rules-engine",
+  "name": "@shepherdnerds/json-rules-engine",
   "version": "7.3.1",
   "description": "Rules Engine expressed in simple json",
   "main": "dist/index.js",
   "types": "types/index.d.ts",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "engines": {
     "node": ">=18.0.0"
   },
