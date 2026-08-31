@@ -71,7 +71,7 @@ describe('RuleResult: firedConditions', () => {
     expect(results[0].firedConditions[0]).to.include({ fact: 'age', result: true })
   })
 
-  it('still reports the satisfied leaves of an "all" the rule failed on', async () => {
+  it('reports nothing for an "all" the rule failed on, at any depth', async () => {
     const conditions = {
       all: [
         { fact: 'age', operator: 'greaterThan', value: 18 },
@@ -84,8 +84,29 @@ describe('RuleResult: firedConditions', () => {
 
     const { failureResults } = await engine.run()
     expect(failureResults[0].result).to.equal(false)
-    expect(failureResults[0].firedConditions).to.have.length(1)
-    expect(failureResults[0].firedConditions[0].fact).to.equal('age')
+    expect(failureResults[0].firedConditions).to.deep.equal([])
+  })
+
+  // The same partially-passing group must answer the same way whether it is the root or nested.
+  it('reports only the branch that decided an "any" over two groups', async () => {
+    const conditions = {
+      any: [
+        {
+          all: [
+            { fact: 'age', operator: 'greaterThan', value: 18 },
+            { fact: 'balance', operator: 'greaterThan', value: 999 }
+          ]
+        },
+        { all: [{ fact: 'member', operator: 'equal', value: true }] }
+      ]
+    }
+    engine.addRule(factories.rule({ conditions, event: { type: 'eligible' } }))
+    engine.addFact('age', 25)
+    engine.addFact('balance', 10)
+    engine.addFact('member', true)
+
+    const { results } = await engine.run()
+    expect(results[0].firedConditions.map((c) => c.fact)).to.deep.equal(['member'])
   })
 
   it('flips the test for every leaf under a "not" wrapping an "any"', async () => {

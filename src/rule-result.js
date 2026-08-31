@@ -3,20 +3,23 @@
 import deepClone from 'clone'
 
 /**
- * Walks an evaluated condition tree, collecting the leaf conditions that were satisfied.
+ * Walks an evaluated condition tree, collecting the leaves that decided its outcome.
+ * A node that did not hold contributes nothing, so a group that failed is not descended into
+ * and a rule that did not fire reports nothing at all.
  * A "some" nested condition is treated as a leaf: its inner conditions ran against a scoped
  * almanac per array item, so their .result reflects the last item tried, not the rule's decision.
  * @param {Condition} node
- * @param {Boolean} negated - true when the current node is inside an odd number of "not"s
+ * @param {Boolean} negated - true when the node is inside an odd number of "not"s
  * @returns {Object[]} serialized (toJSON) leaf conditions
  */
 function collectFiredConditions (node, negated) {
+  if (node.result !== !negated) {
+    return []
+  }
   const operator = node.booleanOperator()
   if (operator === 'all' || operator === 'any') {
     return node[operator].reduce((acc, child) => {
-      if (child.result === !negated) {
-        acc.push(...collectFiredConditions(child, negated))
-      }
+      acc.push(...collectFiredConditions(child, negated))
       return acc
     }, [])
   }
@@ -26,7 +29,7 @@ function collectFiredConditions (node, negated) {
   if (node.isConditionReference()) {
     return []
   }
-  return node.result === !negated ? [node.toJSON(false)] : []
+  return [node.toJSON(false)]
 }
 
 export default class RuleResult {
