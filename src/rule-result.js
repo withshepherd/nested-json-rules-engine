@@ -2,6 +2,34 @@
 
 import deepClone from 'clone'
 
+/**
+ * Walks an evaluated condition tree, collecting the leaf conditions that were satisfied.
+ * A "some" nested condition is treated as a leaf: its inner conditions ran against a scoped
+ * almanac per array item, so their .result reflects the last item tried, not the rule's decision.
+ * @param {Condition} node
+ * @param {Boolean} negated - true when the current node is inside an odd number of "not"s
+ * @returns {Object[]} serialized (toJSON) leaf conditions
+ */
+function collectFiredConditions (node, negated) {
+  if (!node) return []
+  const operator = node.booleanOperator()
+  if (operator === 'all' || operator === 'any') {
+    return node[operator].reduce((acc, child) => {
+      if (child.result === !negated) {
+        acc.push(...collectFiredConditions(child, negated))
+      }
+      return acc
+    }, [])
+  }
+  if (operator === 'not') {
+    return collectFiredConditions(node.not, !negated)
+  }
+  if (node.isConditionReference()) {
+    return []
+  }
+  return node.result === !negated ? [node.toJSON(false)] : []
+}
+
 export default class RuleResult {
   constructor (conditions, event, priority, name) {
     this.conditions = deepClone(conditions)
@@ -9,10 +37,12 @@ export default class RuleResult {
     this.priority = deepClone(priority)
     this.name = deepClone(name)
     this.result = null
+    this.firedConditions = []
   }
 
   setResult (result) {
     this.result = result
+    this.firedConditions = collectFiredConditions(this.conditions, false)
   }
 
   resolveEventParams (almanac) {

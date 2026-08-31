@@ -189,6 +189,12 @@ export interface RuleResult {
   event?: Event;
   priority?: number;
   result: any;
+  /**
+   * Every satisfied leaf condition (fact-based, scoped, or nested 'some'), serialized via
+   * that condition's own toJSON(false). Always populated, including an empty array when the
+   * rule failed. Not included in toJSON() output - it is a strict subset of `conditions`.
+   */
+  firedConditions: NestedConditionResult[];
   toJSON(): string;
   toJSON<T extends boolean>(
     stringify: T
@@ -231,6 +237,8 @@ interface ConditionProperties {
   priority?: number;
   params?: Record<string, any>;
   name?: string;
+  /** Inert passthrough - the engine never reads or interprets this, only carries it. */
+  metadata?: unknown;
 }
 
 /**
@@ -245,6 +253,7 @@ interface ScopedConditionProperties {
   priority?: number;
   params?: Record<string, any>;
   name?: string;
+  metadata?: unknown;
 }
 
 interface ScopedConditionPropertiesResult extends ScopedConditionProperties, ConditionResultProperties {}
@@ -261,6 +270,7 @@ interface NestedConditionProperties {
   priority?: number;
   params?: Record<string, any>;
   name?: string;
+  metadata?: unknown;
 }
 
 interface NestedConditionPropertiesResult extends NestedConditionProperties, ConditionResultProperties {
@@ -275,6 +285,7 @@ type AllConditions = {
   all: NestedCondition[];
   name?: string;
   priority?: number;
+  metadata?: unknown;
 };
 type AllConditionsResult = AllConditions & {
   all: NestedConditionResult[]
@@ -283,16 +294,18 @@ type AnyConditions = {
   any: NestedCondition[];
   name?: string;
   priority?: number;
+  metadata?: unknown;
 };
 type AnyConditionsResult = AnyConditions & {
   any: NestedConditionResult[]
 } & BooleanConditionResultProperties
-type NotConditions = { not: NestedCondition; name?: string; priority?: number };
+type NotConditions = { not: NestedCondition; name?: string; priority?: number; metadata?: unknown };
 type NotConditionsResult = NotConditions & {not: NestedConditionResult} & BooleanConditionResultProperties;
 type ConditionReference = {
   condition: string;
   name?: string;
   priority?: number;
+  metadata?: unknown;
 };
 type ConditionReferenceResult = ConditionReference & BooleanConditionResultProperties
 export type TopLevelCondition =

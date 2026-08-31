@@ -77,12 +77,18 @@ export default class Condition {
     if (this.name) {
       props.name = this.name
     }
+    if (this.metadata) {
+      props.metadata = this.metadata
+    }
     const oper = Condition.booleanOperator(this)
     if (oper) {
       if (Array.isArray(this[oper])) {
         props[oper] = this[oper].map((c) => c.toJSON(false))
       } else {
         props[oper] = this[oper].toJSON(false)
+      }
+      if (this.result !== undefined) {
+        props.result = this.result
       }
     } else if (this.isConditionReference()) {
       props.condition = this.condition
