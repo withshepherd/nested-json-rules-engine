@@ -662,7 +662,7 @@ describe('Engine: event', () => {
       const { results: [ruleResult] } = await engine.run()
       const { conditions: { any: [conditionReference] } } = ruleResult
       expect(conditionReference.result).to.equal(false)
-      const expected = '{"conditions":{"priority":1,"any":[{"name":"nameOfTheUndefinedConditionReference","condition":"conditionThatIsNotDefined"},{"name":"over 21","operator":"greaterThanInclusive","value":21,"fact":"age","factResult":21,"valueResult":21,"result":true}],"result":true},"event":{"type":"awesome"},"priority":100,"result":true}'
+      const expected = '{"conditions":{"priority":1,"any":[{"name":"nameOfTheUndefinedConditionReference","condition":"conditionThatIsNotDefined","result":false},{"name":"over 21","operator":"greaterThanInclusive","value":21,"fact":"age","factResult":21,"valueResult":21,"result":true}],"result":true},"event":{"type":"awesome"},"priority":100,"result":true}'
       expect(JSON.stringify(ruleResult)).to.equal(expected)
     })
   })

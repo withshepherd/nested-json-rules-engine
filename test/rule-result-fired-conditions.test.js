@@ -202,4 +202,25 @@ describe('RuleResult: firedConditions', () => {
     expect(json.conditions.result).to.equal(true)
     expect(json.conditions.not.result).to.equal(false)
   })
+
+  it('serializes an unresolved condition reference\'s own .result through toJSON(false)', async () => {
+    engine = engineFactory([], { allowUndefinedConditions: true })
+    const conditions = {
+      any: [
+        { condition: 'conditionThatIsNotDefined' },
+        { fact: 'age', operator: 'greaterThanInclusive', value: 21 }
+      ]
+    }
+    engine.addRule(factories.rule({ conditions, event: { type: 'of-age' } }))
+    engine.addFact('age', 25)
+
+    const { results } = await engine.run()
+    const reference = results[0].conditions.any[0]
+    const json = results[0].toJSON(false)
+
+    expect(reference.result).to.equal(false)
+    expect(json.conditions.any[0].result).to.equal(false)
+    expect(results[0].firedConditions).to.have.length(1)
+    expect(results[0].firedConditions[0].fact).to.equal('age')
+  })
 })

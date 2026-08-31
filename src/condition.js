@@ -92,6 +92,9 @@ export default class Condition {
       }
     } else if (this.isConditionReference()) {
       props.condition = this.condition
+      if (this.result !== undefined) {
+        props.result = this.result
+      }
     } else if (this.isNestedCondition()) {
       props.operator = this.operator
       props.fact = this.fact
