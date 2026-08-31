@@ -11,7 +11,6 @@ import deepClone from 'clone'
  * @returns {Object[]} serialized (toJSON) leaf conditions
  */
 function collectFiredConditions (node, negated) {
-  if (!node) return []
   const operator = node.booleanOperator()
   if (operator === 'all' || operator === 'any') {
     return node[operator].reduce((acc, child) => {

@@ -190,11 +190,18 @@ export interface RuleResult {
   priority?: number;
   result: any;
   /**
-   * Every satisfied leaf condition (fact-based, scoped, or nested 'some'), serialized via
-   * that condition's own toJSON(false). Always populated, including an empty array when the
-   * rule failed. Not included in toJSON() output - it is a strict subset of `conditions`.
+   * The leaf conditions (fact-based, scoped, or nested 'some') that were satisfied, each
+   * serialized via its own toJSON(false). A leaf inside an odd number of 'not's counts as
+   * satisfied when its own result is false. A failed rule can still report leaves it
+   * partially satisfied, so this being non-empty does not mean the rule passed.
+   * Boolean nodes and condition references are never reported.
+   * Not included in toJSON() output.
    */
-  firedConditions: NestedConditionResult[];
+  firedConditions: Array<
+    | ConditionPropertiesResult
+    | NestedConditionPropertiesResult
+    | ScopedConditionPropertiesResult
+  >;
   toJSON(): string;
   toJSON<T extends boolean>(
     stringify: T

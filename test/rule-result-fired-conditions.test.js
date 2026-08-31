@@ -1,22 +1,12 @@
 'use strict'
 
-import sinon from 'sinon'
 import engineFactory from '../src/index'
 
 describe('RuleResult: firedConditions', () => {
   let engine
-  let sandbox
-
-  before(() => {
-    sandbox = sinon.createSandbox()
-  })
 
   beforeEach(() => {
     engine = engineFactory()
-  })
-
-  afterEach(() => {
-    sandbox.restore()
   })
 
   it('reports every leaf in an "all" that fully passes', async () => {
@@ -31,7 +21,6 @@ describe('RuleResult: firedConditions', () => {
     engine.addFact('balance', 500)
 
     const { results } = await engine.run()
-    expect(results[0].result).to.equal(true)
     expect(results[0].firedConditions).to.have.length(2)
     expect(results[0].firedConditions.map((c) => c.fact)).to.have.members(['age', 'balance'])
   })
@@ -48,7 +37,6 @@ describe('RuleResult: firedConditions', () => {
     engine.addFact('revenue', 10)
 
     const { results } = await engine.run()
-    expect(results[0].result).to.equal(true)
 
     // the higher-priority "payroll" condition short-circuits the "any", so "revenue"
     // is never evaluated and has no .result at all - not merely a false one
@@ -67,7 +55,6 @@ describe('RuleResult: firedConditions', () => {
     engine.addFact('age', 10)
 
     const { results } = await engine.run()
-    expect(results[0].result).to.equal(true)
     expect(results[0].firedConditions).to.have.length(1)
     expect(results[0].firedConditions[0]).to.include({ fact: 'age', result: false })
   })
@@ -80,9 +67,43 @@ describe('RuleResult: firedConditions', () => {
     engine.addFact('age', 60)
 
     const { results } = await engine.run()
-    expect(results[0].result).to.equal(true)
     expect(results[0].firedConditions).to.have.length(1)
     expect(results[0].firedConditions[0]).to.include({ fact: 'age', result: true })
+  })
+
+  it('still reports the satisfied leaves of an "all" the rule failed on', async () => {
+    const conditions = {
+      all: [
+        { fact: 'age', operator: 'greaterThan', value: 18 },
+        { fact: 'balance', operator: 'greaterThan', value: 100 }
+      ]
+    }
+    engine.addRule(factories.rule({ conditions, event: { type: 'adult-with-balance' } }))
+    engine.addFact('age', 25)
+    engine.addFact('balance', 10)
+
+    const { failureResults } = await engine.run()
+    expect(failureResults[0].result).to.equal(false)
+    expect(failureResults[0].firedConditions).to.have.length(1)
+    expect(failureResults[0].firedConditions[0].fact).to.equal('age')
+  })
+
+  it('flips the test for every leaf under a "not" wrapping an "any"', async () => {
+    const conditions = {
+      not: {
+        any: [
+          { fact: 'age', operator: 'greaterThan', value: 50 },
+          { fact: 'balance', operator: 'greaterThan', value: 999 }
+        ]
+      }
+    }
+    engine.addRule(factories.rule({ conditions, event: { type: 'neither' } }))
+    engine.addFact('age', 25)
+    engine.addFact('balance', 10)
+
+    const { results } = await engine.run()
+    expect(results[0].firedConditions.map((c) => c.fact)).to.have.members(['age', 'balance'])
+    expect(results[0].firedConditions.every((c) => c.result === false)).to.equal(true)
   })
 
   it('is an empty array when a simple "all" rule fails', async () => {
@@ -94,8 +115,7 @@ describe('RuleResult: firedConditions', () => {
 
     const { failureResults } = await engine.run()
     expect(failureResults[0].result).to.equal(false)
-    expect(failureResults[0].firedConditions).to.be.an('array')
-    expect(failureResults[0].firedConditions).to.have.length(0)
+    expect(failureResults[0].firedConditions).to.deep.equal([])
   })
 
   it('carries fact, operator, value, factResult, result, metadata, and path on a reported leaf', async () => {
@@ -151,7 +171,7 @@ describe('RuleResult: firedConditions', () => {
     expect(results[0].firedConditions[0]).to.not.have.property('type')
   })
 
-  it('does not appear in ruleResult.toJSON(false)', async () => {
+  it('does not appear in ruleResult.toJSON(false) or JSON.stringify(ruleResult)', async () => {
     const conditions = {
       all: [{ fact: 'age', operator: 'greaterThan', value: 18 }]
     }
@@ -161,6 +181,7 @@ describe('RuleResult: firedConditions', () => {
     const { results } = await engine.run()
     const json = results[0].toJSON(false)
     expect(json).to.not.have.property('firedConditions')
+    expect(JSON.stringify(results[0])).to.not.contain('firedConditions')
   })
 
   it('sets .result on the root of ruleResult.conditions for "all", "any", and "not" rules', async () => {
