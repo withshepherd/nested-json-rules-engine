@@ -407,6 +407,9 @@ class Rule extends EventEmitter {
      * @param {RuleResult} ruleResult
      */
     const processResult = (result) => {
+      // any/all/not dispatch below calls evaluateCondition's inner helpers directly,
+      // bypassing the assignment of .result onto the root condition node
+      ruleResult.conditions.result = result
       ruleResult.setResult(result)
       let processEvent = Promise.resolve()
       if (this.engine.replaceFactsInEventParams) {

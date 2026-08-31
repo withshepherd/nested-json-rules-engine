@@ -49,7 +49,8 @@ describe('Acceptance', () => {
     }
     ],
     operator: 'all',
-    priority: 1
+    priority: 1,
+    result: true
   }
   let successSpy
   let failureSpy
@@ -188,7 +189,8 @@ describe('Acceptance', () => {
           }
         ],
         operator: 'all',
-        priority: 1
+        priority: 1,
+        result: true
       },
       event: {
         params: {
@@ -198,7 +200,35 @@ describe('Acceptance', () => {
       },
       name: 'first',
       priority: 10,
-      result: true
+      result: true,
+      firedConditions: [
+        {
+          fact: 'high-priority',
+          factResult: [
+            2
+          ],
+          operator: 'contains',
+          params: {
+            factParam: 1
+          },
+          path: '$.values',
+          result: true,
+          value: 2,
+          valueResult: 2
+        },
+        {
+          fact: 'low-priority',
+          factResult: 2,
+          operator: 'in',
+          result: true,
+          value: [
+            2
+          ],
+          valueResult: [
+            2
+          ]
+        }
+      ]
     })
     expect(results[1]).to.deep.equal({
       conditions: {
@@ -222,14 +252,34 @@ describe('Acceptance', () => {
           }
         ],
         operator: 'all',
-        priority: 1
+        priority: 1,
+        result: true
       },
       event: {
         type: 'event-2'
       },
       name: 'second',
       priority: 1,
-      result: true
+      result: true,
+      firedConditions: [
+        {
+          fact: 'high-priority',
+          factResult: [
+            2
+          ],
+          valueResult: 2,
+          operator: 'containsDivisibleValuesOf',
+          params: {
+            factParam: 1
+          },
+          path: '$.values',
+          result: true,
+          value: {
+            fact: 'rule-created-fact',
+            path: '$.array'
+          }
+        }
+      ]
     })
     expect(failureResults).to.be.empty()
 

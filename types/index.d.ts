@@ -189,6 +189,19 @@ export interface RuleResult {
   event?: Event;
   priority?: number;
   result: any;
+  /**
+   * The leaf conditions (fact-based, scoped, or nested 'some') that were satisfied, each
+   * serialized via its own toJSON(false). A leaf inside an odd number of 'not's counts as
+   * satisfied when its own result is false. A group that did not hold is not descended into,
+   * so a rule that did not fire reports an empty array.
+   * Boolean nodes and condition references are never reported.
+   * Not included in toJSON() output.
+   */
+  firedConditions: Array<
+    | ConditionPropertiesResult
+    | NestedConditionPropertiesResult
+    | ScopedConditionPropertiesResult
+  >;
   toJSON(): string;
   toJSON<T extends boolean>(
     stringify: T
@@ -231,6 +244,8 @@ interface ConditionProperties {
   priority?: number;
   params?: Record<string, any>;
   name?: string;
+  /** Inert passthrough - the engine never reads or interprets this, only carries it. */
+  metadata?: unknown;
 }
 
 /**
@@ -245,6 +260,7 @@ interface ScopedConditionProperties {
   priority?: number;
   params?: Record<string, any>;
   name?: string;
+  metadata?: unknown;
 }
 
 interface ScopedConditionPropertiesResult extends ScopedConditionProperties, ConditionResultProperties {}
@@ -261,6 +277,7 @@ interface NestedConditionProperties {
   priority?: number;
   params?: Record<string, any>;
   name?: string;
+  metadata?: unknown;
 }
 
 interface NestedConditionPropertiesResult extends NestedConditionProperties, ConditionResultProperties {
@@ -275,6 +292,7 @@ type AllConditions = {
   all: NestedCondition[];
   name?: string;
   priority?: number;
+  metadata?: unknown;
 };
 type AllConditionsResult = AllConditions & {
   all: NestedConditionResult[]
@@ -283,16 +301,18 @@ type AnyConditions = {
   any: NestedCondition[];
   name?: string;
   priority?: number;
+  metadata?: unknown;
 };
 type AnyConditionsResult = AnyConditions & {
   any: NestedConditionResult[]
 } & BooleanConditionResultProperties
-type NotConditions = { not: NestedCondition; name?: string; priority?: number };
+type NotConditions = { not: NestedCondition; name?: string; priority?: number; metadata?: unknown };
 type NotConditionsResult = NotConditions & {not: NestedConditionResult} & BooleanConditionResultProperties;
 type ConditionReference = {
   condition: string;
   name?: string;
   priority?: number;
+  metadata?: unknown;
 };
 type ConditionReferenceResult = ConditionReference & BooleanConditionResultProperties
 export type TopLevelCondition =
